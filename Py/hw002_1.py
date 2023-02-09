@@ -51,10 +51,12 @@ def DetermineCandidateSplits(D, Xi):
     C=[] # initialize set of candidate splits for feature Xi
     data_sort = D[[Xi, 'y_n']].sort_values(by=Xi).reset_index(drop=True)
     # print(data_sort)
-    for j in range(len(D)):
-        vj=D['y_n'][j]
+    for j in range(len(D)-1):
+        if data_sort['y_n'][j] != data_sort['y_n'][j+1]:
+            C.append(D[Xi][j])
+    return(C)
 
-DetermineCandidateSplits(data_raw['D1.txt'],'x_n1')
+print(len(DetermineCandidateSplits(data_raw['D1.txt'],'x_n2')))
 
 # find the best splits
 def FindBestSplits(D,C):
