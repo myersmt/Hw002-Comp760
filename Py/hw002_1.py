@@ -28,4 +28,50 @@ Goal:
 """
 import numpy as np
 import pandas as pd
+import os
 
+# read in info
+path_to_data = r'\Data'
+os.chdir(os.getcwd()+path_to_data)
+# print(os.listdir(os.getcwd()+path_to_data))
+data_raw = {}
+for file in os.listdir(os.getcwd()):
+    #print(file)
+    data_raw[file]=(pd.read_csv(file, sep=' ', names=["x_n1","x_n2","y_n"], index_col=False))
+    #data_raw[file]=data_raw[file].reset_index(drop=True)
+
+# Previewing the dataframes in the dictionaries
+# for key, val in data_raw.items():
+#     print(f'\n{key}\n{val.head()}')
+
+# Organize the data
+
+# Determine splits
+def DetermineCandidateSplits(D, Xi):
+    C=[] # initialize set of candidate splits for feature Xi
+    data_sort = D[[Xi, 'y_n']].sort_values(by=Xi).reset_index(drop=True)
+    # print(data_sort)
+    for j in range(len(D)):
+        vj=D['y_n'][j]
+
+DetermineCandidateSplits(data_raw['D1.txt'],'x_n1')
+
+# find the best splits
+def FindBestSplits(D,C):
+    pass
+
+# Create function for creating the decision tree
+#   Send in data and export decision tree
+def MakeSubtree(D):
+    # C = DetermineCandidateSplits(D)
+    # if node-empty or zero-gain-ratio or entropy-zero:
+    #     make_leaf_node_N
+    #     determine class_label-probabilites for N
+    # else:
+    #     make internal node N
+    #     S = FindBestSplits(D,C)
+    #     for outcomeK in S:
+    #         Dk = subset of instances that have outcome k
+    #         kth child of N = MakeSubtree(Dk)
+    # return(subtree@N)
+    pass
