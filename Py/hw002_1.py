@@ -62,47 +62,80 @@ def DetermineCandidateSplits(D, Xi):
 #print(sortData(data_raw['D1.txt'],'x_n1'))
 
 # Entropy
-def entropy(Y):
-    """
-    Also known as Shanon Entropy
-    Reference: https://en.wikipedia.org/wiki/Entropy_(information_theory)
-    """
-    unique, count = np.unique(Y, return_counts=True, axis=0)
-    prob = count/len(Y)
-    en = np.sum((-1)*prob*np.log2(prob))
-    return en
-
+def entropy(tot, wins, loss):
+    # print(tot,wins,loss)
+    pwin = wins/tot
+    plos = loss/tot
+    if pwin == 0:
+        return (-1)*plos*np.log2(plos)
+    elif plos == 0:
+        return (-1)*(pwin)*np.log2(pwin)
+    else:
+        return (-1)*((pwin)*np.log2(pwin)+plos*np.log2(plos))
 
 # Joint Entropy
-def jEntropy(Y,S):
-    """
-    H(Y;X)
-    Reference: https://en.wikipedia.org/wiki/Joint_entropy
-    """
-    YS = np.c_[Y,S]
-    return entropy(YS)
+def infoGain(t,tw,tl,at,aw,al,bt,bw,bl):
+    return entropy(t,tw,tl)-(((at/t)*(entropy(at,aw,al)))+((bt/t)*(entropy(bt,bw,bl))))
 
-# Conditional Entropy
-def cEntropy(Y, S):
-    """
-    conditional entropy = Joint Entropy - Entropy of X
-    H(Y|X) = H(Y;X) - H(X)
-    Reference: https://en.wikipedia.org/wiki/Conditional_entropy
-    """
-    return jEntropy(Y, S) - entropy(S)
+# Entropy
+def InfoGain(Y):
+    total = Y[0][0]+Y[0][1]+Y[1][0]+Y[1][1]
+    totwins = Y[0][1]+Y[1][1]
+    totloss = Y[0][0]+Y[1][0]
+    beforeTotal = Y[0][0]+Y[0][1]
+    beforeWins = Y[0][1]
+    beforeLoss = Y[0][0]
+    afterTotal = Y[1][0]+Y[1][1]
+    afterWins = Y[1][1]
+    afterLoss = Y[1][0]
+    # en = np.sum((-1)*prob*np.log2(prob))
+    return infoGain(total,totwins,totloss,afterTotal,afterWins,afterLoss,beforeTotal,beforeWins,beforeLoss)
+
+def GainRatio(Y):
+    total = Y[0][0]+Y[0][1]+Y[1][0]+Y[1][1]
+    totwins = Y[0][1]+Y[1][1]
+    totloss = Y[0][0]+Y[1][0]
+    beforeTotal = Y[0][0]+Y[0][1]
+    beforeWins = Y[0][1]
+    beforeLoss = Y[0][0]
+    afterTotal = Y[1][0]+Y[1][1]
+    afterWins = Y[1][1]
+    afterLoss = Y[1][0]
+    # en = np.sum((-1)*prob*np.log2(prob))
+    return infoGain(total,totwins,totloss,afterTotal,afterWins,afterLoss,beforeTotal,beforeWins,beforeLoss)/entropy(total,afterTotal,beforeTotal)
 
 
-# Information Gain
-def InfoGain(Y, S):
-    """
-    Information Gain, I(Y;X) = H(Y) - H(Y|X)
-    Reference: https://en.wikipedia.org/wiki/Information_gain_in_decision_trees#Formal_definition
-    """
-    return entropy(Y) - cEntropy(Y,S)
 
-# Gain Ratio
-def GainRatio(D,S):
-    return InfoGain(D,S)/entropy(S)
+# # Joint Entropy
+# def jEntropy(Y,S):
+#     """
+#     H(Y;X)
+#     Reference: https://en.wikipedia.org/wiki/Joint_entropy
+#     """
+#     YS = np.c_[Y,S]
+#     return entropy(YS)
+
+# # Conditional Entropy
+# def cEntropy(Y, S):
+#     """
+#     conditional entropy = Joint Entropy - Entropy of X
+#     H(Y|X) = H(Y;X) - H(X)
+#     Reference: https://en.wikipedia.org/wiki/Conditional_entropy
+#     """
+#     return jEntropy(Y, S) - entropy(S)
+
+
+# # Information Gain
+# def InfoGain(Y, S):
+#     """
+#     Information Gain, I(Y;X) = H(Y) - H(Y|X)
+#     Reference: https://en.wikipedia.org/wiki/Information_gain_in_decision_trees#Formal_definition
+#     """
+#     return entropy(Y) - cEntropy(Y,S)
+
+# # Gain Ratio
+# def GainRatio(D,S):
+#     return InfoGain(D,S)/entropy(S)
 
 def Success(D, splitVal):
     Xi = list(D)[0]
@@ -135,9 +168,33 @@ def SplitGain(D, Xi):
 
 # SplitGain(data_raw['D1.txt'],'x_n1')
 dict_of_gains=SplitGain(data_raw['D1.txt'],'x_n1')
-print(f'Key\t\tBefore:\t\tAfter:')
-for key,val in dict_of_gains.items():
-    print(key, val)
+# print(f'Key\t\tBefore:\t\tAfter:')
+# for key,val in dict_of_gains.items():
+#     print(key, val)
+
+max = 0
+for x in range(len(dict_of_gains)):
+    if GainRatio(list(dict_of_gains.items())[x][1]) > max:
+        # max = GainRatio(list(dict_of_gains.items())[x][1])
+        print(GainRatio(list(dict_of_gains.items())[x][1]))
+        max = x
+        print(max)
+    print(f'{x}',GainRatio(list(dict_of_gains.items())[x][1]))
+# c=0
+# print(max)
+# for gain in dict_of_gains:
+#     c+=1
+#     if c==max:
+#         print(gain)
+print(GainRatio(list(dict_of_gains.items())[max][1]))
+# print(infoGain(100,30,70,35,25,10,65,5,60)/entropy(100,35,65))
+# print(entropy(100,35,65))
+# print(entropy(35,25,10))
+# print(entropy(65,5,60))
+# print(infoGain(14,9,5,8,6,2,6,3,3))
+# print(max)
+# print(infoGain(14,9,5,7,3,4,7,6,1))
+# entropy(dict_of_gains[1])
 
 # find the best splits
 def FindBestSplits(D,C):
