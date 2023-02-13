@@ -106,12 +106,12 @@ def SplitCount(D, splitVal):
     beforeCount={1:0,0:0}
     afterCount={1:0,0:0}
     for i, d in enumerate(D[Xi]):
-        if d < splitVal:
+        if d <= splitVal:
             if D['y_n'][i] == 0:
                 beforeCount[0]+=1
             if D['y_n'][i] == 1:
                 beforeCount[1]+=1
-        elif d >= splitVal:
+        elif d > splitVal:
             if D['y_n'][i] == 0:
                 afterCount[1]+=1
             if D['y_n'][i] == 1:
@@ -133,9 +133,11 @@ def SplitGain(D, C, Xi):
 # find the best splits
 def FindBestSplit(D,C, Xi):
     dict_of_gains=SplitGain(D,C, Xi)
+    # print('best split candidates:',C, 'D:',dict_of_gains)
     max = 0
     lis_num = 0
     comp_max=0
+    c_num=0
     for x in range(len(dict_of_gains)):
         if GainRatio(list(dict_of_gains.items())[x][1]) > comp_max:
             #print(GainRatio(list(dict_of_gains.items())[0][1]))
@@ -148,7 +150,6 @@ def FindBestSplit(D,C, Xi):
         if val == max:
             lis_num = row
             # print(row, val, '<====')
-    #print(max, comp_max)
     return([lis_num, c_num, max, comp_max])
 
 def listSplit(dict, ind):
@@ -165,42 +166,46 @@ def stoppingCriteria(D,C,Xi):
         return True
     for candidate in dict_cand.items():
         if entropy(candidate[1]) == 0:
-            print("stop 2")
+            #print("stop 2")
             return True
     for candidate in dict_cand.items():
-        print(candidate[1],intrinsicEntropy(candidate[1]))
+        #print(candidate[1],entropy(candidate[1]))
         if GainRatio(candidate[1]) == 0 and entropy(candidate[1]) != 0:
             #print(ratioCount)
             ratioCount+=1
-            print("ratio")
+            #print("ratio")
         if ratioCount==len(dict_cand.items()):
-            print("test")
+            print("\ntest\n")
             return True
+    else:
+        return False
     # for candidate in SplitGain(D,C,Xi).items():
     #     if all(GainRatio(candidate))
 
 
 def MakeSubtree(D, Xi):
     C = DetermineCandidateSplits(D,Xi)
-
+    #print('best splits:',FindBestSplit(D,C,Xi))
     # if stopping_criteria(C)
     if stoppingCriteria(D, C, Xi):
-        print(f'Make Leaf: {C}')
+        print(f'Make Leaf: {D}')
     #     make_leaf_node_N
     #     determine class_label-probabilites for N
     else:
     #     make internal node N
-        print('Make Internal Node')
+        #print('C right before S', C, 'D:', D)
         S = FindBestSplit(D,C,Xi)
         #print(S)
-        print(listSplit(sortData(D,Xi),S[0]))
+        print(f'Make Internal Node: {C}')
+        #print(S)
+        #print(listSplit(sortData(D,Xi),S[0]))
         # print(S[1])
         # print(D[Xi].index(S[1]))
         for sub in listSplit(sortData(D,Xi),S[0]):
+            #print(sub)
             Dk = sub
-            #Nchild = MakeSubtree(Dk, Xi)
+            Nchild = MakeSubtree(Dk, Xi)
             #print(Nchild)
     # return(subtree@N)
 
 MakeSubtree(data_raw['D1.txt'], 'x_n1')
-
