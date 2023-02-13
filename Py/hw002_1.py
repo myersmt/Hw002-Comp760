@@ -139,9 +139,13 @@ def FindBestSplit(D,C, Xi):
     comp_max=0
     c_num=0
     for x in range(len(dict_of_gains)):
+        #print(list(dict_of_gains.items())[x][1],entropy(list(dict_of_gains.items())[x][1]),GainRatio(list(dict_of_gains.items())[x][1]))
         if GainRatio(list(dict_of_gains.items())[x][1]) > comp_max:
+            #print('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
             #print(GainRatio(list(dict_of_gains.items())[0][1]))
             comp_max = GainRatio(list(dict_of_gains.items())[x][1])
+            entropy_max = entropy(list(dict_of_gains.items())[x][1])
+            info_gain = InfoGain(list(dict_of_gains.items())[x][1])
             max = list(dict_of_gains.items())[x][0]
             c_num=x
         #print(list(dict_of_gains.items())[x][0],f'{x}',GainRatio(list(dict_of_gains.items())[x][1]))
@@ -150,7 +154,7 @@ def FindBestSplit(D,C, Xi):
         if val == max:
             lis_num = row
             # print(row, val, '<====')
-    return([lis_num, c_num, max, comp_max])
+    return([lis_num, c_num, max, comp_max, entropy_max, info_gain])
 
 def listSplit(dict, ind):
     return(dict.iloc[:ind+1,:].reset_index(drop=True),dict.iloc[ind+1:,:].reset_index(drop=True))
@@ -182,30 +186,64 @@ def stoppingCriteria(D,C,Xi):
     # for candidate in SplitGain(D,C,Xi).items():
     #     if all(GainRatio(candidate))
 
+class Node():
+    def __init__(self, feature_index=None, threshold=None, left=None, right=None, value=None, gainRatio=None):
 
-def MakeSubtree(D, Xi):
-    C = DetermineCandidateSplits(D,Xi)
-    #print('best splits:',FindBestSplit(D,C,Xi))
-    # if stopping_criteria(C)
-    if stoppingCriteria(D, C, Xi):
-        print(f'Make Leaf: {D}')
-    #     make_leaf_node_N
-    #     determine class_label-probabilites for N
-    else:
-    #     make internal node N
-        #print('C right before S', C, 'D:', D)
-        S = FindBestSplit(D,C,Xi)
-        #print(S)
-        print(f'Make Internal Node: {C}')
-        #print(S)
-        #print(listSplit(sortData(D,Xi),S[0]))
-        # print(S[1])
-        # print(D[Xi].index(S[1]))
-        for sub in listSplit(sortData(D,Xi),S[0]):
-            #print(sub)
-            Dk = sub
-            Nchild = MakeSubtree(Dk, Xi)
-            #print(Nchild)
-    # return(subtree@N)
 
-MakeSubtree(data_raw['D1.txt'], 'x_n1')
+        # for the decision node
+        self.feature_index = feature_index
+        self.threshold = threshold
+        self.left = left
+        self.right = right
+        self.gainRatio = gainRatio
+
+
+        # for leaf node
+        self.value = value
+
+def calcLeafValue(D):
+    return(max(list(D), key=list(D).count))
+
+class Tree():
+    def __init__(self, min_splits=None, max_depth=None):
+        # setting the root of the tree
+        self.root = None
+
+        # Stopping conditions
+        self.min_splits = min_splits
+        self.max_depth = max_depth
+
+    def MakeSubtree(self, D, Xi):
+        C = DetermineCandidateSplits(D,Xi)
+        # print('\n\n')
+        # FindBestSplit(D,C,Xi)
+        # print('\n\n')
+        #print('best splits:',FindBestSplit(D,C,Xi))
+        # if stopping_criteria(C)
+        if stoppingCriteria(D, C, Xi):
+            print(f'Make Leaf: {calcLeafValue(D["y_n"])}')
+        #     make_leaf_node_N
+        #     determine class_label-probabilites for N
+        else:
+        #     make internal node N
+            #print('C right before S', C, 'D:', D)
+            S = FindBestSplit(D,C,Xi)
+            #print(S)
+            print(f'Make Internal Node: {S[2]}')
+            #print(S)
+            #print(listSplit(sortData(D,Xi),S[0]))
+            # print(S[1])
+            # print(D[Xi].index(S[1]))
+            for sub in listSplit(sortData(D,Xi),S[0]):
+                #print(sub)
+                Dk = sub
+                Nchild = self.MakeSubtree(Dk, Xi)
+                #print(Nchild)
+        #return(Nchild)
+
+Tree().MakeSubtree(data_raw['D1.txt'], 'x_n1')
+# MakeSubtree(data_raw['D1.txt'], 'x_n1')
+# print(data_raw['D1.txt'])
+# for data, vals in data_raw['D1.txt'].items():
+#     print(data,vals)
+#     print(entropy(data))
