@@ -33,12 +33,9 @@ import os
 # read in info
 path_to_data = r'\Data'
 os.chdir(os.getcwd()+path_to_data)
-# print(os.listdir(os.getcwd()+path_to_data))
 data_raw = {}
 for file in os.listdir(os.getcwd()):
-    #print(file)
     data_raw[file]=(pd.read_csv(file, sep=' ', names=["x_n1","x_n2","y_n"], index_col=False))
-    #data_raw[file]=data_raw[file].reset_index(drop=True)
 
 # Previewing the dataframes in the dictionaries
 # for key, val in data_raw.items():
@@ -61,9 +58,26 @@ def DetermineCandidateSplits(D, Xi):
 #print(DetermineCandidateSplits(data_raw['D1.txt'],'x_n1'))
 #print(sortData(data_raw['D1.txt'],'x_n1'))
 
-# Entropy
-def entropy(tot, wins, loss):
-    # print(tot,wins,loss)
+# # Entropy working
+# def entropy(tot, wins, loss):
+#     # print(tot,wins,loss)
+#     pwin = wins/tot
+#     plos = loss/tot
+#     if pwin == 0:
+#         return (-1)*plos*np.log2(plos)
+#     elif plos == 0:
+#         return (-1)*(pwin)*np.log2(pwin)
+#     else:
+#         return (-1)*((pwin)*np.log2(pwin)+plos*np.log2(plos))
+def entropy(splitDict):
+    # assume that we are getting just one split (i.e. before or after the split)
+    if type(splitDict) == dict:
+        wins = splitDict[0]
+        loss = splitDict[1]
+    elif type(splitDict) == tuple:
+        wins = splitDict[1][1]+splitDict[1][0]
+        loss = splitDict[1][1]+splitDict[1][0]
+    tot = wins+loss
     pwin = wins/tot
     plos = loss/tot
     if pwin == 0:
@@ -73,71 +87,54 @@ def entropy(tot, wins, loss):
     else:
         return (-1)*((pwin)*np.log2(pwin)+plos*np.log2(plos))
 
-# Joint Entropy
-def infoGain(t,tw,tl,at,aw,al,bt,bw,bl):
-    return entropy(t,tw,tl)-(((at/t)*(entropy(at,aw,al)))+((bt/t)*(entropy(bt,bw,bl))))
-
-# Entropy
-def InfoGain(Y):
-    total = Y[0][0]+Y[0][1]+Y[1][0]+Y[1][1]
-    totwins = Y[0][1]+Y[1][1]
-    totloss = Y[0][0]+Y[1][0]
-    beforeTotal = Y[0][0]+Y[0][1]
-    beforeWins = Y[0][1]
-    beforeLoss = Y[0][0]
-    afterTotal = Y[1][0]+Y[1][1]
-    afterWins = Y[1][1]
-    afterLoss = Y[1][0]
-    # en = np.sum((-1)*prob*np.log2(prob))
-    return infoGain(total,totwins,totloss,afterTotal,afterWins,afterLoss,beforeTotal,beforeWins,beforeLoss)
-
-def GainRatio(Y):
-    total = Y[0][0]+Y[0][1]+Y[1][0]+Y[1][1]
-    totwins = Y[0][1]+Y[1][1]
-    totloss = Y[0][0]+Y[1][0]
-    beforeTotal = Y[0][0]+Y[0][1]
-    beforeWins = Y[0][1]
-    beforeLoss = Y[0][0]
-    afterTotal = Y[1][0]+Y[1][1]
-    afterWins = Y[1][1]
-    afterLoss = Y[1][0]
-    # en = np.sum((-1)*prob*np.log2(prob))
-    return infoGain(total,totwins,totloss,afterTotal,afterWins,afterLoss,beforeTotal,beforeWins,beforeLoss)/entropy(total,afterTotal,beforeTotal)
-
-
-
 # # Joint Entropy
-# def jEntropy(Y,S):
-#     """
-#     H(Y;X)
-#     Reference: https://en.wikipedia.org/wiki/Joint_entropy
-#     """
-#     YS = np.c_[Y,S]
-#     return entropy(YS)
+def InfoGain(splitDict):
+    totals = {1:splitDict[0][1]+splitDict[1][1], 0:splitDict[0][0]+splitDict[1][0]}
+    afterSplit = splitDict[1]
+    beforeSplit = splitDict[0]
+    beforeP = (beforeSplit[1]+beforeSplit[0])/(totals[1]+totals[0])
+    afterP = (afterSplit[1]+afterSplit[0])/(totals[1]+totals[0])
+    return entropy(totals)-(((afterP)*(entropy(afterSplit)))+((beforeP)*(entropy(beforeSplit))))
 
-# # Conditional Entropy
-# def cEntropy(Y, S):
-#     """
-#     conditional entropy = Joint Entropy - Entropy of X
-#     H(Y|X) = H(Y;X) - H(X)
-#     Reference: https://en.wikipedia.org/wiki/Conditional_entropy
-#     """
-#     return jEntropy(Y, S) - entropy(S)
+# print(infoGain(data_raw['D1.txt']))
+# Entropy
+# def InfoGain(Y):
+#     total = Y[0][0]+Y[0][1]+Y[1][0]+Y[1][1]
+#     totwins = Y[0][1]+Y[1][1]
+#     totloss = Y[0][0]+Y[1][0]
+#     beforeTotal = Y[0][0]+Y[0][1]
+#     beforeWins = Y[0][1]
+#     beforeLoss = Y[0][0]
+#     afterTotal = Y[1][0]+Y[1][1]
+#     afterWins = Y[1][1]
+#     afterLoss = Y[1][0]
+#     # en = np.sum((-1)*prob*np.log2(prob))
+#     return infoGain(Y)
+
+def intrinsicEntropy(Y):
+    beforeTot = Y[0][1]+Y[0][0]
+    afterTot = Y[1][1]+Y[1][0]
+    tot = beforeTot+afterTot
+    pbefore = beforeTot/tot
+    pafter = afterTot/tot
+    if pbefore == 0:
+        return (-1)*pafter*np.log2(pafter)
+    elif pafter == 0:
+        return (-1)*(pbefore)*np.log2(pbefore)
+    else:
+        return (-1)*((pbefore)*np.log2(pbefore)+pafter*np.log2(pafter))
+
+def GainRatio(splitDict):
+    return InfoGain(splitDict)/intrinsicEntropy(splitDict)
+
+# Stopping criteria
+# def stopping_criteria(candidate_splits, total, wins, loss):
+#     if candidate_splits == [] or entropy(total, wins, loss) == 0 or all(GainRatio(total, wins, loss, at, aw, al, bt, bw, bl, (at + bt)) == 0 for at, aw, al, bt, bw, bl in candidate_splits):
+#         return True
+#     return False
 
 
-# # Information Gain
-# def InfoGain(Y, S):
-#     """
-#     Information Gain, I(Y;X) = H(Y) - H(Y|X)
-#     Reference: https://en.wikipedia.org/wiki/Information_gain_in_decision_trees#Formal_definition
-#     """
-#     return entropy(Y) - cEntropy(Y,S)
-
-# # Gain Ratio
-# def GainRatio(D,S):
-#     return InfoGain(D,S)/entropy(S)
-
-def Success(D, splitVal):
+def SplitCount(D, splitVal):
     Xi = list(D)[0]
     beforeCount={1:0,0:0}
     afterCount={1:0,0:0}
@@ -147,7 +144,7 @@ def Success(D, splitVal):
                 beforeCount[0]+=1
             if D['y_n'][i] == 1:
                 beforeCount[1]+=1
-        elif d > splitVal:
+        elif d >= splitVal:
             if D['y_n'][i] == 0:
                 afterCount[1]+=1
             if D['y_n'][i] == 1:
@@ -155,63 +152,98 @@ def Success(D, splitVal):
     #print(beforeCount, afterCount)
     return beforeCount, afterCount
 
-#Success(sortData(data_raw['D1.txt'],'x_n1'),0.5)
 
-def SplitGain(D, Xi):
+def SplitGain(D, C, Xi):
     gains = {}
-    splits = DetermineCandidateSplits(D,Xi)
     dsort = sortData(D,Xi)
+    #print(dsort)
     for d in dsort[Xi]:
-        if d in splits:
-            gains.update({d:Success(D,d)})
+        if d in C:
+            gains.update({d:SplitCount(D,d)})
     return(gains)
 
-# SplitGain(data_raw['D1.txt'],'x_n1')
-dict_of_gains=SplitGain(data_raw['D1.txt'],'x_n1')
-# print(f'Key\t\tBefore:\t\tAfter:')
-# for key,val in dict_of_gains.items():
-#     print(key, val)
-
-max = 0
-for x in range(len(dict_of_gains)):
-    if GainRatio(list(dict_of_gains.items())[x][1]) > max:
-        # max = GainRatio(list(dict_of_gains.items())[x][1])
-        print(GainRatio(list(dict_of_gains.items())[x][1]))
-        max = x
-        print(max)
-    print(f'{x}',GainRatio(list(dict_of_gains.items())[x][1]))
-# c=0
-# print(max)
-# for gain in dict_of_gains:
-#     c+=1
-#     if c==max:
-#         print(gain)
-print(GainRatio(list(dict_of_gains.items())[max][1]))
-# print(infoGain(100,30,70,35,25,10,65,5,60)/entropy(100,35,65))
-# print(entropy(100,35,65))
-# print(entropy(35,25,10))
-# print(entropy(65,5,60))
-# print(infoGain(14,9,5,8,6,2,6,3,3))
-# print(max)
-# print(infoGain(14,9,5,7,3,4,7,6,1))
-# entropy(dict_of_gains[1])
 
 # find the best splits
-def FindBestSplits(D,C):
-    pass
+def FindBestSplit(D,C, Xi):
+    # SplitGain(data_raw['D1.txt'],'x_n1')
+    dict_of_gains=SplitGain(D,C, Xi)
+    #print(dict_of_gains)
+    #print(GainRatio(list(dict_of_gains.items())[0][1]))
+    # print(f'Key\t\tBefore:\t\tAfter:')
+    # # for key,val in dict_of_gains.items():
+    # #     print(key, val)
+    # for key,val in dict_of_gains.items():
+    #     print(key,GainRatio(val))
 
+
+    max = 0
+    lis_num = 0
+    comp_max=0
+    for x in range(len(dict_of_gains)):
+        if GainRatio(list(dict_of_gains.items())[x][1]) > comp_max:
+            #print(GainRatio(list(dict_of_gains.items())[0][1]))
+            comp_max = GainRatio(list(dict_of_gains.items())[x][1])
+            max = list(dict_of_gains.items())[x][0]
+            c_num=x
+        #print(list(dict_of_gains.items())[x][0],f'{x}',GainRatio(list(dict_of_gains.items())[x][1]))
+    for row, val in enumerate(sortData(D, Xi)[Xi]):
+        # print(row, val, sortData(D, Xi)['y_n'][row])
+        if val == max:
+            lis_num = row
+            # print(row, val, '<====')
+    #print(max, comp_max)
+    return([lis_num, c_num, max, comp_max])
+
+def listSplit(dict, ind):
+    return(dict.iloc[:ind+1,:].reset_index(drop=True),dict.iloc[ind+1:,:].reset_index(drop=True))
+
+# FindBestSplit(data_raw['D1.txt'])
 # Create function for creating the decision tree
 #   Send in data and export decision tree
-def MakeSubtree(D):
-    # C = DetermineCandidateSplits(D)
-    # if node-empty or zero-gain-ratio or entropy-zero:
+def stoppingCriteria(D,C,Xi):
+    dict_cand = SplitGain(D,C,Xi)
+    ratioCount=0
+    #get_row(D, C)
+    #print(D)
+    #print(D)
+    if C == []:
+        return True
+    for candidate in dict_cand.items():
+        if entropy(candidate[1]) == 0:
+            return True
+    for candidate in dict_cand.items():
+        #print(len(SplitGain(D,C,Xi)))
+        if GainRatio(candidate[1]) == 0 and entropy(candidate[1]) != 0:
+            print(ratioCount)
+            ratioCount+=1
+        if ratioCount==len(dict_cand.items()):
+            print("test")
+            return True
+    # for candidate in SplitGain(D,C,Xi).items():
+    #     if all(GainRatio(candidate))
+
+
+def MakeSubtree(D, Xi):
+    C = DetermineCandidateSplits(D,Xi)
+    #print(C)
+    #print(C)
+    # print(C)
+    # if stopping_criteria(C)
+    if stoppingCriteria(D, C, Xi):
+        print(f'Make Leaf: {C}')
     #     make_leaf_node_N
     #     determine class_label-probabilites for N
-    # else:
+    else:
     #     make internal node N
-    #     S = FindBestSplits(D,C)
-    #     for; outcomeK in S:
-    #         Dk = subset of instances that have outcome k
-    #         kth child of N = MakeSubtree(Dk)
+        print('Make Internal Node')
+        S = FindBestSplit(D,C,Xi)
+        #print(listSplit(sortData(D,Xi),S[0]))
+        # print(S[1])
+        # print(D[Xi].index(S[1]))
+        for sub in listSplit(sortData(D,Xi),S[0]):
+            Dk = sub
+            Nchild = MakeSubtree(Dk, Xi)
+            #print(Nchild)
     # return(subtree@N)
-    pass
+
+MakeSubtree(data_raw['D1.txt'], 'x_n1')
