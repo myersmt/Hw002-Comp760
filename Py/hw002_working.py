@@ -40,13 +40,13 @@ for file in os.listdir(os.getcwd()):
 
 # Organize the data
 def sortData(D, Xi):
-    print(D)
     return D[[Xi,'y_n']].sort_values(by=Xi).reset_index(drop=True)
 
 # Determine splits
 def DetermineCandidateSplits(D, Xi):
     C=[] # initialize set of candidate splits for feature Xi
     data_sort = sortData(D,Xi)
+    # print(data_sort)
     for j in range(len(D)-1):
         if data_sort['y_n'][j] != data_sort['y_n'][j+1]:
             C.append(data_sort[Xi][j])
@@ -75,6 +75,7 @@ def entropy(splitDict):
     else:
         return (-1)*((pwin)*np.log2(pwin)+plos*np.log2(plos))
 
+# # Joint Entropy
 def InfoGain(splitDict):
     totals = {1:splitDict[0][1]+splitDict[1][1], 0:splitDict[0][0]+splitDict[1][0]}
     afterSplit = splitDict[1]
@@ -118,6 +119,7 @@ def SplitCount(D, splitVal):
     #print(beforeCount, afterCount)
     return beforeCount, afterCount
 
+
 def SplitGain(D, C, Xi):
     gains = {}
     dsort = sortData(D,Xi)
@@ -126,6 +128,7 @@ def SplitGain(D, C, Xi):
         if d in C:
             gains.update({d:SplitCount(D,d)})
     return(gains)
+
 
 # find the best splits
 def FindBestSplit(D,C, Xi):
@@ -154,7 +157,8 @@ def FindBestSplit(D,C, Xi):
     return([lis_num, c_num, max, comp_max, entropy_max, info_gain])
 
 def listSplit(dict, ind):
-    return dict.iloc[:ind+1,:].reset_index(drop=True), dict.iloc[ind+1:,:].reset_index(drop=True)
+    return(dict.iloc[:ind+1,:].reset_index(drop=True),dict.iloc[ind+1:,:].reset_index(drop=True))
+
 
 # Create function for creating the decision tree
 #   Send in data and export decision tree
@@ -197,6 +201,9 @@ class Node():
         # for leaf node
         self.value = value
 
+def calcLeafValue(D):
+    return(max(list(D), key=list(D).count))
+
 class Tree():
     def __init__(self, min_splits=None, max_depth=None):
         # setting the root of the tree
@@ -205,38 +212,7 @@ class Tree():
         # Stopping conditions
         self.min_splits = min_splits
         self.max_depth = max_depth
-    
-    def calcLeafValue(self,D):
-        return(max(list(D), key=list(D).count))
 
-    # def MakeSubtree(self, D, Xi):
-    #     C = DetermineCandidateSplits(D,Xi)
-    #     # print('\n\n')
-    #     # FindBestSplit(D,C,Xi)
-    #     # print('\n\n')
-    #     #print('best splits:',FindBestSplit(D,C,Xi))
-    #     # if stopping_criteria(C)
-    #     if stoppingCriteria(D, C, Xi):
-    #         print(f'Make Leaf: {calcLeafValue(D["y_n"])}')
-    #     #     make_leaf_node_N
-    #     #     determine class_label-probabilites for N
-    #     else:
-    #     #     make internal node N
-    #         #print('C right before S', C, 'D:', D)
-    #         S = FindBestSplit(D,C,Xi)
-    #         #print(S)
-    #         print(f'Make Internal Node: {S[2]}')
-    #         #print(S)
-    #         #print(listSplit(sortData(D,Xi),S[0]))
-    #         # print(S[1])
-    #         # print(D[Xi].index(S[1]))
-    #         for sub in listSplit(sortData(D,Xi),S[0]):
-    #             print(sub)
-    #             #print(sub)
-    #             Dk = sub
-    #             Nchild = self.MakeSubtree(Dk, Xi)
-    #             #print(Nchild)
-    #     #return(Nchild)
     def MakeSubtree(self, D, Xi):
         C = DetermineCandidateSplits(D,Xi)
         # print('\n\n')
@@ -245,7 +221,7 @@ class Tree():
         #print('best splits:',FindBestSplit(D,C,Xi))
         # if stopping_criteria(C)
         if stoppingCriteria(D, C, Xi):
-            print(f'Make Leaf: {self.calcLeafValue(D["y_n"])}')
+            print(f'Make Leaf: {calcLeafValue(D["y_n"])}')
         #     make_leaf_node_N
         #     determine class_label-probabilites for N
         else:
@@ -258,66 +234,13 @@ class Tree():
             #print(listSplit(sortData(D,Xi),S[0]))
             # print(S[1])
             # print(D[Xi].index(S[1]))
-            subl, subr = listSplit(sortData(D,Xi),S[0])
-            #print('subl:',subl ,'subr', subr)
-            #print(sub)
-            left_subtree = self.MakeSubtree(subl, Xi)
-            right_subtree = self.MakeSubtree(subr, Xi)
-            return Node(feature_index=Xi,left=left_subtree,right=right_subtree,gainRatio=S[2])
-        return Node(value=self.calcLeafValue(D['y_n']))
+            for sub in listSplit(sortData(D,Xi),S[0]):
+                #print(sub)
+                Dk = sub
+                Nchild = self.MakeSubtree(Dk, Xi)
+                #print(Nchild)
+        #return(Nchild)
 
-    def print_tree(self, tree=None, indent=" "):
-        if not tree:
-            tree = self.root
-
-        if tree.value is not None:
-            print(tree.value)
-
-        else:
-            print("X_"+str(tree.feature_index), "<=", tree.threshold, "?", tree.info_gain)
-            print("%sleft:" % (indent), end="")
-            self.print_tree(tree.left, indent + indent)
-            print("%sright:" % (indent), end="")
-            self.print_tree(tree.right, indent + indent)
-
-    def fit(self, X, Y):
-        ''' function to train the tree '''
-
-        dataset = np.concatenate((X, Y), axis=1)
-        self.root = self.MakeSubtree(dataset, ['x_n1'])
-    # def create_decision_tree(self, D, Xis):
-    #     best_feature = None
-    #     best_split = None
-    #     max_info_gain_ratio = -1
-    #     for feature in Xis:
-    #         C = DetermineCandidateSplits(D, feature)
-    #         best_split = FindBestSplit(D,C,feature)
-    #         info_ratio = best_split[3]
-    #         if info_ratio > max_info_gain_ratio:
-    #             max_info_gain_ratio = info_ratio
-    #             best_feature = feature
-
-    #     # Creating the decision tree with split and feature
-    #     decision_tree = {f'{best_feature}<={best_split}': {}}
-    #     data_split_l = D[D[best_feature] <= best_split]
-    #     data_split_r = D[D[best_feature] > best_split]
-    #     Xis.remove(best_feature)
-    #     decision_tree[f"{best_feature} <= {best_split}"]["Left"] = self.create_decision_tree(data_split_l, Xis)
-    #     decision_tree[f"{best_feature} <= {best_split}"]["Right"] = self.create_decision_tree(data_split_r, Xis)
-
-    #     return decision_tree
-
-X = data_raw['D1.txt'].iloc[:, :-1].values
-Y = data_raw['D1.txt'].iloc[:, -1].values.reshape(-1,1)
-
-from sklearn.model_selection import train_test_split
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2, random_state=41)
-
-classifier = Tree()
-classifier.fit(X_train,Y_train)
-classifier.print_tree()
-
-# Tree().create_decision_tree(data_raw['D1.txt'], 'x_n1')
 Tree().MakeSubtree(data_raw['D1.txt'], 'x_n1')
 # MakeSubtree(data_raw['D1.txt'], 'x_n1')
 # print(data_raw['D1.txt'])
