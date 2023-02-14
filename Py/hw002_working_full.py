@@ -70,7 +70,7 @@ def entropy(splitDict):
     elif type(splitDict) == tuple:
         wins = splitDict[1][1]+splitDict[0][1]
         loss = splitDict[1][0]+splitDict[0][0]
-    #print(splitDict)
+    #print(splitDict, wins, loss)
     tot = wins+loss
     # if tot == 0:
     #     print('error')
@@ -135,14 +135,14 @@ def SplitGain(D, C, Xi):
     for feature in Xi:
         dsort = sortData(D,feature)
         #print(dsort)
-        gains = {}
+        gains = []
         #print(dsort[Xi])
         for d in dsort[feature]:
             if d in C[feature]:
                 #print({d: SplitCount(D,d)})
-                gains.update({d:SplitCount(D,d)})
+                gains.append([d,SplitCount(D,d)])
         dic[feature] = gains
-        #print(dic)
+        print(dic)
     return(dic)
 
 
@@ -201,6 +201,7 @@ def stoppingCriteria(D,Xi):
     #print('Stop C starting:')
     C = DetermineCandidateSplits(D, Xi)
     dict_cand = SplitGain(D,C,Xi)
+    #print(dict_cand)
     #print(dict_cand)
     for feature in Xi:
         gain_list = []
