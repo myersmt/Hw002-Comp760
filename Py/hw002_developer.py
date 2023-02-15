@@ -342,7 +342,7 @@ class Tree():
 
 #Tree().MakeSubtree(data_raw['Druns.txt'], None, None, None, None, ['x_n1','x_n2'])
 os.environ["PATH"] += 'C:/Program Files/Graphviz/bin'
-file = 'D1'
+file = 'D2'
 Tree().makeTree(data_raw[file+'.txt'], f'../tree/{file}_tree')
 
 # MakeSubtree(data_raw['D1.txt'], 'x_n1')
