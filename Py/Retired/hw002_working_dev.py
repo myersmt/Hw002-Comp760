@@ -60,6 +60,7 @@ def DetermineCandidateSplits(D, Xi):
                 print(data_sort[feature][j])
                 lis.append(data_sort[feature][j])
         C[feature]=lis
+        print('Feature: ', feature, ', Candidates:', C[feature])
     #print(C)
     return(C)
 

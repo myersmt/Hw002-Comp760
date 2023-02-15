@@ -53,8 +53,14 @@ steps = 20
 true_x = np.arange(min,max,(max-min)/steps)
 true_y = np.sin(true_x)
 
-lis_of_epsilon = [0, 0.001, 0.01, 0.1, 1]
+lis_of_epsilon = [0, 0, 0.001, 0.01, 0.1, 1]
+check = True
 for epsilon in lis_of_epsilon:
+    if epsilon == 0 and check:
+        steps = 100
+        check = False
+    else:
+        steps = 20
     adjustment = np.random.normal(0, epsilon, steps)
     #print(adjustment)
     
@@ -74,10 +80,14 @@ for epsilon in lis_of_epsilon:
     print(f'Train Error: {train_error}\nTest Error: {test_error}')
     
     # Plotting
+    title = f'Lagrange Interpolation for Epsilon = {epsilon}, n = {steps}'
     plt.scatter(train_set,poly(train_set),label='Train')
     plt.scatter(test_set, poly(test_set), label='Test: Polynomial')
     plt.plot(true_x, true_y, label=r"Sin(X)", linestyle='-.')
     plt.legend()
-    plt.title(f'{epsilon}')
+    plt.xlabel(f'Train Error: {train_error}   Test Error: {test_error}')
+    plt.title(title)
     plt.axis([min,max,min,max])
+    print(os.getcwd())
+    plt.savefig(f'plots/Q4/new_set/{title}.png')
     plt.show()

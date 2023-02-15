@@ -1,0 +1,7 @@
+digraph {
+	"x_n2 >= 2"
+	"x_n2 >= 21" [label=1]
+	"x_n2 >= 2" -> "x_n2 >= 21" [label=False]
+	"x_n2 >= 21" [label=1]
+	"x_n2 >= 2" -> "x_n2 >= 21" [label=True]
+}

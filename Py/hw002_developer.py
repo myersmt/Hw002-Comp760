@@ -2,16 +2,12 @@
 Creator: Matt Myers
 Due Date: 02/15/2023
 Class:  Comp Sci 760
-
 Question 001:
-
 Topic: Implement a decision-tree learner for classification
-
 Assume:
     * Each item has two continous features x in R^2
     * The class label is binary and encoded as y in {0,1}
     * Data files are in plain text with one labeled item per line, seperated by whitespace
-
 Goal:
     * Candidate splits (j, c) for numeric features should use a threshold c in feature dimension j in the form of x_j >= c.
     * c should be on values of that dimension present in the training data; i.e. the threshold is on training points,
@@ -346,7 +342,8 @@ class Tree():
 
 #Tree().MakeSubtree(data_raw['Druns.txt'], None, None, None, None, ['x_n1','x_n2'])
 os.environ["PATH"] += 'C:/Program Files/Graphviz/bin'
-Tree().makeTree(data_raw['D2.txt'], '../tree/drun_tree')
+file = 'D1'
+Tree().makeTree(data_raw[file+'.txt'], f'../tree/{file}_tree')
 
 # MakeSubtree(data_raw['D1.txt'], 'x_n1')
 # print(data_raw['D1.txt'])
