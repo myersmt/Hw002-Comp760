@@ -4,3 +4,6 @@ Created by: Matt Myers
 
 Q2-Part 1
 """
+"""
+By our stoppign criteria if 
+"""

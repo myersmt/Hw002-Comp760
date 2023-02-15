@@ -275,14 +275,6 @@ def stoppingCriteria(D,Xi):
 
 class Tree():
     nCount = 0
-    def __init__(self, min_splits=None, max_depth=None):
-        # setting the root of the tree
-        self.root = None
-
-        # Stopping conditions
-        self.min_splits = min_splits
-        self.max_depth = max_depth
-
     def calcLeafValue(self, D):
         return(max(list(D), key=list(D).count))
 
@@ -354,7 +346,7 @@ class Tree():
 
 #Tree().MakeSubtree(data_raw['Druns.txt'], None, None, None, None, ['x_n1','x_n2'])
 os.environ["PATH"] += 'C:/Program Files/Graphviz/bin'
-Tree().makeTree(data_raw['Druns.txt'], '../tree/drun_tree')
+Tree().makeTree(data_raw['D2.txt'], '../tree/drun_tree')
 
 # MakeSubtree(data_raw['D1.txt'], 'x_n1')
 # print(data_raw['D1.txt'])
